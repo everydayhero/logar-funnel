@@ -1,0 +1,14 @@
+{
+  "name": "logar-funnel",
+  "version": "1.0.0",
+  "description": "Funnels streams of logs from Cloudwatch Logs or Kinesis into an Elasticsearch cluster",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Marty Zalega <marty@zalega.me>",
+  "license": "MIT",
+  "dependencies": {
+    "moment": "^2.12.0"
+  }
+}
