@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Marty Zalega <marty@zalega.me>",
+  "homepage": "https://github.com/everydayhero/logar-funnel",
   "license": "MIT",
   "dependencies": {
     "moment": "^2.12.0"
