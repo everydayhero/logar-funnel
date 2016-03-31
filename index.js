@@ -1,60 +1,64 @@
-var post = require("./post");
+require("es6-promise").polyfill();
 
-var processors = {
-  "awslogs": require("./awslogs"),
-  "Records": require("./kinesis")
-};
+var fetch = require("node-fetch");
+var process = require("./process");
+
+var endpoint = process.env.ENDPOINT;
 
 exports.handler = function(input, context) {
-  var keys = Object.keys(input)
-  var procKeys = keys.filter(supportedProcessors);
-
-  if (procKeys.length === 0) {
-    context.fail("No supported processes found: ", keys);
-    return
-  }
-
-  procKeys.forEach(function(key) {
-    var processor = processors[key];
-    var value = input[key];
-
-    processor(value, function(error, bulk) {
-      if (error) {
-        context.fail(error);
-        return;
-      }
-
-      if (!bulk.length) {
-        context.succeed('Control message handled successfully');
-        return;
-      }
-
-      console.log("Sending", bulk.length / 2, "records");
-
-      var bulkData = bulk.join("\n") + "\n";
-      post(bulkData, function(error, success, statusCode, failedItems) {
-        console.log("Response: " + JSON.stringify({
-          "statusCode": statusCode
-        }));
-
-        if (error) {
-          console.log("Error: " + JSON.stringify(error, null, 2));
-
-          if (failedItems && failedItems.length > 0) {
-            console.log("Failed Items: " +
-              JSON.stringify(failedItems, null, 2));
-          }
-
-          context.fail(JSON.stringify(error));
-        } else {
-          console.log("Success: " + JSON.stringify(success));
-          context.succeed("Success");
-        }
-      });
-    });
-  });
+  process(input)
+    .then(post)
+    .then(summarize)
+    .then(context.succeed, context.fail);
 };
 
-function supportedProcessors(key) {
-  return typeof(processors[key]) === "function";
+function post(bulk) {
+  var body = bulk.join("\n") + "\n";
+  var params = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Host": endpoint
+    },
+    body: body
+  };
+
+  return fetch(endpoint + "/_bulk", params);
+}
+
+function summarize(res) {
+  console.log(res.ok);
+  console.log(res.status);
+  console.log(res.statusText);
+
+  return res.json().then(function(info) {
+    var failedItems, details, errors = {};
+
+    failedItems = info.items.filter(function(x) {
+      return x.status >= 300;
+    });
+
+    failedItems.forEach(function(x) {
+      errors[x.error.type] = x.error;
+    });
+
+    details = {
+      attemptedItems: info.items.length,
+      successfulItems: info.items.length - failedItems.length,
+      failedItems: failedItems.length,
+      errors: values(errors)
+    }
+
+    if (res.ok && !info.errors) {
+      return Promise.resolve(details);
+    } else {
+      return Promise.reject(details);
+    }
+  });
+}
+
+function values(object) {
+  return Object.keys(object).map(function(key) {
+    return object[key];
+  });
 }

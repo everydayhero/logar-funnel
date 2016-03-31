@@ -1,21 +1,27 @@
-var zlib = require('zlib');
+var zlib = require("zlib");
 
-module.exports = function(awslogs, cb) {
-  var zippedInput = new Buffer(awslogs.data, 'base64');
-
-  // decompress the input
-  zlib.gunzip(zippedInput, function(error, buffer) {
-    if (error) { cb(error); return; }
-
-    // parse the input from JSON
-    var awslogsData = JSON.parse(buffer.toString('utf8'));
-
-    // transform the input to Elasticsearch documents
-    var elasticsearchBulkData = transform(awslogsData);
-
-    cb(null, elasticsearchBulkData);
-  });
+module.exports = function(awslogs) {
+  var zippedInput = new Buffer(awslogs.data, "base64");
+  return unzip(zippedInput)
+    .then(parseJSON)
+    .then(transform);
 };
+
+function unzip(input) {
+  return new Promise(function(resolve, reject) {
+    zlib.gunzip(input, function(error, buffer) {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(buffer);
+      }
+    })
+  });
+}
+
+function parseJSON(buffer) {
+  return JSON.parse(buffer.toString("utf8"));
+}
 
 function transform(payload) {
   var bulk = [];
@@ -53,6 +59,7 @@ function transform(payload) {
       JSON.stringify(source)
     );
   });
+
   return bulk;
 }
 
