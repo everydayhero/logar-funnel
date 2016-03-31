@@ -2,13 +2,13 @@ var processors = {
   "awslogs": require("./awslogs"),
   "Records": require("./kinesis")
 };
-var processorKeys = Object.keys(processors);
 
 module.exports = function(input) {
   var processor = nullProcessor;
-  var value;
+  var keys = Object.keys(processors);
+  var key, value;
 
-  for (key in processorkeys) {
+  while (key = keys.shift()) {
     value = input[key];
     if (isValid(value)) {
       processor = processors[key];
