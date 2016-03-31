@@ -32,7 +32,7 @@ function summarize(res) {
   console.log(res.statusText);
 
   return res.json().then(function(info) {
-    var failedItems, details, errors = {};
+    var failedItems, errors = {};
 
     failedItems = info.items.filter(function(x) {
       return x.status >= 300;
@@ -42,17 +42,17 @@ function summarize(res) {
       errors[x.error.type] = x.error;
     });
 
-    details = {
+    console.log({
       attemptedItems: info.items.length,
       successfulItems: info.items.length - failedItems.length,
       failedItems: failedItems.length,
       errors: values(errors)
-    }
+    });
 
     if (res.ok) {
-      return Promise.resolve(details);
+      return Promise.resolve("Success");
     } else {
-      return Promise.reject(details);
+      return Promise.reject("Failed: " + res.statusText);
     }
   });
 }
