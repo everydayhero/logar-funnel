@@ -49,7 +49,7 @@ function summarize(res) {
       errors: values(errors)
     }
 
-    if (res.ok && !info.errors) {
+    if (res.ok) {
       return Promise.resolve(details);
     } else {
       return Promise.reject(details);
