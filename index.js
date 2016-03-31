@@ -1,12 +1,12 @@
 require("es6-promise").polyfill();
 
 var fetch = require("node-fetch");
-var process = require("./process");
+var doProcess = require("./process");
 
 var endpoint = process.env.ENDPOINT;
 
 exports.handler = function(input, context) {
-  process(input)
+  doProcess(input)
     .then(post)
     .then(summarize)
     .then(context.succeed, context.fail);
