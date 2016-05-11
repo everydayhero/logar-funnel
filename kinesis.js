@@ -13,18 +13,13 @@ function transform(records) {
     var indexKey = timestamp.format("[kinesis-]YYYY.MM.DD");
     var typeKey = record.eventSourceARN.split("/").pop();
     var index = {index: {_index: indexKey, _type: typeKey}};
-    var keys = Object.keys(data);
 
-    var object = {};
-    keys.forEach(function(key) {
-      var value = data[key];
-      setValue(object, key.split("."), value);
-    });
-    object["@timestamp"] = timestamp.format();
+    var entry = expandDotNotation(data);
+    entry["@timestamp"] = timestamp.format();
 
     bulk.push(
       JSON.stringify(index),
-      JSON.stringify(object)
+      JSON.stringify(entry)
     );
   });
 
@@ -44,14 +39,21 @@ function decode(data) {
   return JSON.parse(buffer);
 }
 
-function setValue(object, path, value) {
-  var key = path[0];
-  var val = value;
+function expandDotNotation(input) {
+  var result = {}, edge, parts, part, leaf;
 
-  if (path.length > 1) {
-    val = {};
-    setValue(val, path.slice(1), value);
+  for (var key in input) {
+    edge = result;
+    parts = key.split('.');
+    leaf = parts.pop();
+
+    while (parts.length) {
+      part = parts.shift();
+      edge = edge[part] = edge[part] || {};
+    }
+
+    edge[leaf] = input[key]
   }
 
-  object[key] = val;
+  return result;
 }
