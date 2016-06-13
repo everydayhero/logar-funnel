@@ -4,7 +4,7 @@
   "description": "Funnels streams of logs from Cloudwatch Logs or Kinesis into an Elasticsearch cluster",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Marty Zalega <marty@zalega.me>",
   "homepage": "https://github.com/everydayhero/logar-funnel",
@@ -14,5 +14,10 @@
     "es6-promise": "^3.1.2",
     "moment": "^2.12.0",
     "node-fetch": "^1.4.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.3.0",
+    "mocha": "^2.5.3"
   }
 }
