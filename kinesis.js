@@ -1,14 +1,12 @@
-var moment = require("moment");
+var moment = require("moment"),
+    getBaseIndex = require("./get-base-index")
 
 module.exports = function(records, cb) {
   return Promise.resolve(records).then(transform);
 };
 
 function getIndex(entry, timestamp, eventSourceARN) {
-  var env = entry.docker.labels["app.env"],
-      name = entry.docker.labels["app.name"],
-      baseIndex = "kinesis." + env + "." + name + ".",
-      indexKey = baseIndex + timestamp.format("YYYY.MM.DD"),
+  var indexKey = getBaseIndex(entry) + timestamp.format("YYYY.MM.DD"),
       typeKey = eventSourceARN.split("/").pop(),
       index = {index: {_index: indexKey, _type: typeKey}}
 

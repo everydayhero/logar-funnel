@@ -1,11 +1,23 @@
 var chai = require('chai'),
   chaiAsPromised = require('chai-as-promised'),
   expect = require('chai').expect,
-  kinesis = require('../kinesis')
+  kinesis = require('../kinesis'),
+  getBaseIndex = require('../get-base-index')
 
 chai.use(chaiAsPromised);
 
 describe('Kinesis processor', function() {
+  it('getBaseIndex() returns 'plain-logs.unknown.unknown' with poor metadata', function() {
+    var logWithPoorMetadata = {
+      'log': 'herp derp',
+      'time': '2016-06-12T23:50:19.970290212Z',
+      'hostname': 'staging-a-worker-1feda598',
+      '@timestamp': '2016-06-12T23:50:19Z'
+    },
+    result = getBaseIndex(logWithPoorMetadata)
+    expect(result).to.equal('kinesis.unknown.unknown.')
+  })
+
   it('processes kinesis events', function() {
     var kinesisRecords = require('./kinesis-sample.json'),
         indexKey = 'kinesis.staging.larder.2016.06.12',
