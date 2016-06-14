@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 describe('Kinesis processor', function() {
   it('processes kinesis events', function() {
     var kinesisRecords = require('./kinesis-sample.json'),
-        indexKey = 'kinesis-2016.06.12',
+        indexKey = 'kinesis.staging.larder.2016.06.12',
         typeKey = 'arn:aws:kinesis:EXAMPLE',
         expectedIndex = {index: {_index: indexKey, _type: typeKey}},
         expectedObject = {
@@ -29,7 +29,7 @@ describe('Kinesis processor', function() {
           },
           'hostname': 'staging-a-worker-1feda598',
           '@timestamp': '2016-06-12T23:50:19Z'
-        }
+        },
         expected = [
           JSON.stringify(expectedIndex),
           JSON.stringify(expectedObject),

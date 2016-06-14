@@ -4,18 +4,26 @@ module.exports = function(records, cb) {
   return Promise.resolve(records).then(transform);
 };
 
+function getIndex(entry, timestamp, eventSourceARN) {
+  var env = entry.docker.labels["app.env"],
+      name = entry.docker.labels["app.name"],
+      baseIndex = "kinesis." + env + "." + name + ".",
+      indexKey = baseIndex + timestamp.format("YYYY.MM.DD"),
+      typeKey = eventSourceARN.split("/").pop(),
+      index = {index: {_index: indexKey, _type: typeKey}}
+
+  return index
+}
+
 function transform(records) {
   var bulk = [];
 
   records.forEach(function(record) {
     var data = parse(record);
     var timestamp = moment.utc(data["@timestamp"] || data.timestamp || data.time);
-    var indexKey = timestamp.format("[kinesis-]YYYY.MM.DD");
-    var typeKey = record.eventSourceARN.split("/").pop();
-    var index = {index: {_index: indexKey, _type: typeKey}};
-
     var entry = expandDotNotation(data);
     entry["@timestamp"] = timestamp.format();
+    var index = getIndex(entry, timestamp, record.eventSourceARN);
 
     bulk.push(
       JSON.stringify(index),
