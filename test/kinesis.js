@@ -15,12 +15,12 @@ describe('Kinesis processor', function() {
       '@timestamp': '2016-06-12T23:50:19Z'
     },
     result = getBaseIndex(logWithPoorMetadata)
-    expect(result).to.equal('kinesis.unknown.unknown.')
+    expect(result).to.equal('plain-logs.unknown.unknown.')
   })
 
   it('processes kinesis events', function() {
     var kinesisRecords = require('./kinesis-sample.json'),
-        indexKey = 'kinesis.staging.larder.2016.06.12',
+        indexKey = 'plain-logs.staging.larder.2016.06.12',
         typeKey = 'arn:aws:kinesis:EXAMPLE',
         expectedIndex = {index: {_index: indexKey, _type: typeKey}},
         expectedObject = {
