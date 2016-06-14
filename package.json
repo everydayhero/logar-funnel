@@ -8,6 +8,7 @@
   },
   "author": "Marty Zalega <marty@zalega.me>",
   "homepage": "https://github.com/everydayhero/logar-funnel",
+  "repository": "everydayhero/logar-funnel",
   "license": "MIT",
   "dependencies": {
     "es6-promise": "^3.1.2",
