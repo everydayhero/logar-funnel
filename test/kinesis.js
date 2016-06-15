@@ -7,7 +7,7 @@ var chai = require('chai'),
 chai.use(chaiAsPromised);
 
 describe('Kinesis processor', function() {
-  it('getBaseIndex() returns 'plain-logs.unknown.unknown' with poor metadata', function() {
+  it('getBaseIndex() returns "plain-logs.unknown.unknown" with poor metadata', function() {
     var logWithPoorMetadata = {
       'log': 'herp derp',
       'time': '2016-06-12T23:50:19.970290212Z',
