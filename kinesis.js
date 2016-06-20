@@ -1,5 +1,7 @@
 var moment = require("moment"),
-    getBaseIndex = require("./get-base-index")
+    getBaseIndex = require("./get-base-index"),
+    dot = require("dot-object"),
+    stableStringify = require("json-stable-stringify")
 
 module.exports = function(records, cb) {
   return Promise.resolve(records).then(transform);
@@ -24,8 +26,8 @@ function transform(records) {
     var index = getIndex(entry, timestamp, record.eventSourceARN);
 
     bulk.push(
-      JSON.stringify(index),
-      JSON.stringify(entry)
+      stableStringify(index),
+      stableStringify(entry)
     );
   });
 
@@ -46,20 +48,5 @@ function decode(data) {
 }
 
 function expandDotNotation(input) {
-  var result = {}, edge, parts, part, leaf;
-
-  for (var key in input) {
-    edge = result;
-    parts = key.split('.');
-    leaf = parts.pop();
-
-    while (parts.length) {
-      part = parts.shift();
-      edge = edge[part] = edge[part] || {};
-    }
-
-    edge[leaf] = input[key]
-  }
-
-  return result;
+  return dot.object(dot.dot(input));
 }
