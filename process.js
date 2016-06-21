@@ -1,5 +1,5 @@
 var processors = {
-  "awslogs": require("./awslogs"),
+  "awslogs": require("./cloudwatch"),
   "Records": require("./kinesis")
 };
 

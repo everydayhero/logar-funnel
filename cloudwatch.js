@@ -1,4 +1,5 @@
-var zlib = require("zlib");
+var zlib = require("zlib"),
+    moment = require("moment")
 
 module.exports = function(awslogs) {
   var zippedInput = new Buffer(awslogs.data, "base64");
@@ -32,18 +33,14 @@ function transform(payload) {
   }
 
   payload.logEvents.forEach(function(logEvent) {
-    var timestamp = new Date(1 * logEvent.timestamp);
-
-    // index name format: cwl-YYYY.MM.DD
-    var indexName = [
-      'cwl-' + timestamp.getUTCFullYear(),              // year
-      ('0' + (timestamp.getUTCMonth() + 1)).slice(-2),  // month
-      ('0' + timestamp.getUTCDate()).slice(-2)          // day
-    ].join('.');
-
+    var timestamp = moment.utc(logEvent.timestamp);
+    var indexName = 'cwl.' +
+      payload.logGroup.replace(/\W+/g, "-").replace(/^\W|\W$/g, "") + '.' +
+      timestamp.format("YYYY.MM.DD");
     var source = buildSource(logEvent.message, logEvent.extractedFields);
+
     source['@id'] = logEvent.id;
-    source['@timestamp'] = new Date(1 * logEvent.timestamp).toISOString();
+    source['@timestamp'] = timestamp.format();
     source['@message'] = logEvent.message;
     source['@owner'] = payload.owner;
     source['@log_group'] = payload.logGroup;
@@ -88,8 +85,8 @@ function buildSource(message, extractedFields) {
   }
 
   jsonSubString = extractJson(message);
-  if (jsonSubString !== null) { 
-    return JSON.parse(jsonSubString); 
+  if (jsonSubString !== null) {
+    return JSON.parse(jsonSubString);
   }
 
   return {};
