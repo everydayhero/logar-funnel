@@ -1,5 +1,6 @@
 var zlib = require("zlib"),
-    moment = require("moment")
+    moment = require("moment"),
+    getBaseIndex = require("./get-base-index-cwl")
 
 module.exports = function(awslogs) {
   var zippedInput = new Buffer(awslogs.data, "base64");
@@ -33,11 +34,9 @@ function transform(payload) {
   }
 
   payload.logEvents.forEach(function(logEvent) {
-    var timestamp = moment.utc(logEvent.timestamp);
-    var indexName = 'cwl.' +
-      payload.logGroup.replace(/\W+/g, "-").replace(/^\W|\W$/g, "") + '.' +
-      timestamp.format("YYYY.MM.DD");
-    var source = buildSource(logEvent.message, logEvent.extractedFields);
+    var timestamp = moment.utc(logEvent.timestamp),
+        indexKey = getBaseIndex(payload) + timestamp.format("YYYY.MM.DD"),
+        source = buildSource(logEvent.message, logEvent.extractedFields)
 
     source['@id'] = logEvent.id;
     source['@timestamp'] = timestamp.format();
@@ -47,7 +46,7 @@ function transform(payload) {
     source['@log_stream'] = payload.logStream;
 
     var action = { "index": {} };
-    action.index._index = indexName;
+    action.index._index = indexKey;
     action.index._type = payload.logGroup;
     action.index._id = logEvent.id;
 
