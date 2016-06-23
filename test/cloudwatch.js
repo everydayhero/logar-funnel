@@ -1,11 +1,20 @@
 var chai = require('chai'),
   chaiAsPromised = require('chai-as-promised'),
   expect = require('chai').expect,
-  cloudwatch = require('../cloudwatch');
+  cloudwatch = require('../cloudwatch'),
+  getBaseIndexCWL = require('../get-base-index-cwl')
 
 chai.use(chaiAsPromised);
 
 describe('Cloudwatch processor', function() {
+  it('getBaseIndex() returns dasherized indices', function() {
+    expect(getBaseIndexCWL({logGroup: "/aws/lambda/postoffice"}))
+      .to.equal("cwl.aws-lambda-postoffice.")
+
+    expect(getBaseIndexCWL({logGroup: "VPCFlowLogs"}))
+      .to.equal("cwl.vpc-flow-logs.")
+  })
+
   it('processes cloudwatch events', function() {
     var logSample = require('./cloudwatch-sample.json'),
         expectedIndex1 = {

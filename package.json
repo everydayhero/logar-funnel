@@ -11,6 +11,7 @@
   "repository": "everydayhero/logar-funnel",
   "license": "MIT",
   "dependencies": {
+    "dasherize": "^2.0.0",
     "dot-object": "^1.4.1",
     "es6-promise": "^3.1.2",
     "json-stable-stringify": "^1.0.1",
