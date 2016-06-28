@@ -1,7 +1,10 @@
 var moment = require("moment"),
     getBaseIndex = require("./get-base-index"),
     dot = require("dot-object"),
-    stableStringify = require("json-stable-stringify")
+    stableStringify = require("json-stable-stringify"),
+    get = require('lodash.get'),
+    omit = require("lodash.omit"),
+    logger = require("./bulk-logger")
 
 module.exports = function(records, cb) {
   return Promise.resolve(records).then(transform);
@@ -19,16 +22,28 @@ function transform(records) {
   var bulk = [];
 
   records.forEach(function(record) {
-    var data = parse(record);
-    var timestamp = moment.utc(data["@timestamp"] || data.timestamp || data.time);
-    var entry = expandDotNotation(data);
-    entry["@timestamp"] = timestamp.format();
-    var index = getIndex(entry, timestamp, record.eventSourceARN);
+    var data = parse(record),
+        log = possiblyJSON(data.log),
+        timestamp = moment.utc(data.time).toDate(),
+        labels = dot.dot(omit(data, ['log', 'time'])),
+        appName = get(labels, 'docker.labels.app.name', 'unknown'),
+        process = get(labels, 'docker.labels.app.command', 'unknown'),
+        env = get(labels, 'docker.labels.app.env', 'unknown'),
+        logName = env + "." + appName
 
-    bulk.push(
-      stableStringify(index),
-      stableStringify(entry)
-    );
+    if (!log || log.length > 100000) {
+      return
+    }
+
+    var entry = logger.entry(
+      logName,
+      {timestamp: timestamp, labels: labels},
+      log,
+      appName,
+      process
+    )
+
+    bulk.push(entry)
   });
 
   return bulk;
@@ -47,6 +62,16 @@ function decode(data) {
   return JSON.parse(buffer);
 }
 
-function expandDotNotation(input) {
-  return dot.object(dot.dot(input));
+function possiblyJSON(string) {
+  var trimmed = string.trim()
+
+  if (trimmed[0] == '{' && trimmed[trimmed.length-1] == '}') {
+    try {
+      return JSON.parse(trimmed);
+    } catch (e) {
+      return trimmed;
+    }
+  } else {
+    return trimmed;
+  }
 }

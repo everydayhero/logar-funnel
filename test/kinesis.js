@@ -2,7 +2,8 @@ var chai = require('chai'),
   chaiAsPromised = require('chai-as-promised'),
   expect = require('chai').expect,
   kinesis = require('../kinesis'),
-  getBaseIndex = require('../get-base-index')
+  getBaseIndex = require('../get-base-index'),
+  moment = require("moment")
 
 chai.use(chaiAsPromised);
 
@@ -48,7 +49,38 @@ describe('Kinesis processor', function() {
           JSON.stringify(expectedIndex),
           JSON.stringify(expectedObject),
         ],
-        result = kinesis(kinesisRecords.Records)
+        result = kinesis(kinesisRecords.Records).then(function(x) { return [x[0].toJSON()] })
+
+      expected = [
+        {
+          resource: {
+            type: 'global',
+            labels: {
+              project_id: 'edh-logging-test'
+            }
+          },
+          logName: 'projects/edh-logging-test/logs/staging.larder',
+          labels: {
+            'custom.googleapis.com/primary_key': 'larder',
+            'custom.googleapis.com/secondary_key': 'work-s3',
+            'docker.container_hostname': '510d69680a24',
+            'docker.id': 'deadbeef',
+            'docker.image': 'quay.io/everydayhero/larder:current',
+            'docker.image_id': 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            'docker.labels.app.command': 'work-s3',
+            'docker.labels.app.env': 'staging',
+            'docker.labels.app.name': 'larder',
+            'docker.name': 'larder-staging-work-s3-0.service',
+            'hostname': 'staging-a-worker-1feda598',
+            'stream': 'stderr'
+          },
+          textPayload: 'INFO: Successfully published 12 datums.',
+          timestamp: {
+            nanos: 970000028,
+            seconds: 1465775419
+          }
+        }
+      ]
 
     return expect(result).to.eventually.become(expected)
   })
