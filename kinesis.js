@@ -24,8 +24,8 @@ function transform(records) {
 
   records.forEach(function(record) {
     var data = parse(record),
-        log = possiblyJSON(data.log),
-        timestamp = moment.utc(data.time).toDate(),
+        log = possiblyJSON(data.log || data.message),
+        timestamp = moment.utc(data.time || moment()).toDate(),
         labels = dot.dot(omit(data, ['log', 'time'])),
         appName = get(labels, 'docker.labels.app.name', 'unknown'),
         process = get(labels, 'docker.labels.app.command', 'unknown'),
