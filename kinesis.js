@@ -4,7 +4,8 @@ var moment = require("moment"),
     stableStringify = require("json-stable-stringify"),
     get = require('lodash.get'),
     omit = require("lodash.omit"),
-    logger = require("./bulk-logger")
+    logger = require("./bulk-logger"),
+    possiblyJSON = require('./possibly-json')
 
 module.exports = function(records, cb) {
   return Promise.resolve(records).then(transform);
@@ -60,18 +61,4 @@ function parse(record) {
 function decode(data) {
   var buffer = new Buffer(data, "base64").toString("utf8");
   return JSON.parse(buffer);
-}
-
-function possiblyJSON(string) {
-  var trimmed = string.trim()
-
-  if (trimmed[0] == '{' && trimmed[trimmed.length-1] == '}') {
-    try {
-      return JSON.parse(trimmed);
-    } catch (e) {
-      return trimmed;
-    }
-  } else {
-    return trimmed;
-  }
 }
