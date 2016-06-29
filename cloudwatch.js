@@ -1,6 +1,9 @@
 var zlib = require("zlib"),
     moment = require("moment"),
-    getBaseIndex = require("./get-base-index-cwl")
+    getBaseIndex = require("./get-base-index-cwl"),
+    omit = require("lodash.omit"),
+    logger = require("./bulk-logger"),
+    possiblyJSON = require('./possibly-json')
 
 module.exports = function(awslogs) {
   var zippedInput = new Buffer(awslogs.data, "base64");
@@ -34,77 +37,34 @@ function transform(payload) {
   }
 
   payload.logEvents.forEach(function(logEvent) {
-    var timestamp = moment.utc(logEvent.timestamp),
-        indexKey = getBaseIndex(payload) + timestamp.format("YYYY.MM.DD"),
-        source = buildSource(logEvent.message, logEvent.extractedFields)
+    var log = possiblyJSON(logEvent.message),
+        timestamp = moment.utc(logEvent.timestamp).toDate(),
+        logId = logEvent.id,
+        appName = payload.logGroup,
+        process = "unknown",
+        logName = logNameFromLogGroup(appName),
+        labels = omit(logEvent, ['message', 'timestamp'])
 
-    source['@id'] = logEvent.id;
-    source['@timestamp'] = timestamp.format();
-    source['@message'] = logEvent.message;
-    source['@owner'] = payload.owner;
-    source['@log_group'] = payload.logGroup;
-    source['@log_stream'] = payload.logStream;
+    if (!log || log.length > 100000) {
+      return
+    }
 
-    var action = { "index": {} };
-    action.index._index = indexKey;
-    action.index._type = payload.logGroup;
-    action.index._id = logEvent.id;
+    var entry = logger.entry(
+      logName,
+      {timestamp: timestamp, labels: labels},
+      log,
+      appName,
+      process
+    )
 
-    bulk.push(
-      JSON.stringify(action),
-      JSON.stringify(source)
-    );
+    bulk.push(entry)
   });
 
   return bulk;
 }
 
-function buildSource(message, extractedFields) {
-  if (extractedFields) {
-    var source = {};
-
-    for (var key in extractedFields) {
-      if (extractedFields.hasOwnProperty(key) && extractedFields[key]) {
-        var value = extractedFields[key];
-
-        if (isNumeric(value)) {
-          source[key] = 1 * value;
-          continue;
-        }
-
-        jsonSubString = extractJson(value);
-        if (jsonSubString !== null) {
-          source['$' + key] = JSON.parse(jsonSubString);
-        }
-
-        source[key] = value;
-      }
-    }
-    return source;
-  }
-
-  jsonSubString = extractJson(message);
-  if (jsonSubString !== null) {
-    return JSON.parse(jsonSubString);
-  }
-
-  return {};
-}
-
-function extractJson(message) {
-  var jsonStart = message.indexOf('{');
-  if (jsonStart < 0) return null;
-  var jsonSubString = message.substring(jsonStart);
-  return isValidJson(jsonSubString) ? jsonSubString : null;
-}
-
-function isValidJson(message) {
-  try {
-    JSON.parse(message);
-  } catch (e) { return false; }
-  return true;
-}
-
-function isNumeric(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
+function logNameFromLogGroup(appName) {
+  return appName.toLowerCase()
+    .replace(/(^[^a-z]+|[^a-z]+$)/g, '')
+    .replace(/[^a-z]+/g, '-')
 }
