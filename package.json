@@ -14,7 +14,7 @@
     "dasherize": "^2.0.0",
     "dot-object": "^1.4.1",
     "es6-promise": "^3.1.2",
-    "gcloud-bulk-logger": "github:everydayhero/gcloud-bulk-logger#cee9a25a0fd15b31812512bdce1ba9ffdbfd3283",
+    "gcloud-bulk-logger": "github:everydayhero/gcloud-bulk-logger#e54cfb882ac20c074323befbfac63941ea86dbd1",
     "json-stable-stringify": "^1.0.1",
     "lodash.get": "^4.3.0",
     "lodash.omit": "^4.3.0",
